@@ -1,32 +1,35 @@
 #!/usr/bin/python3
 """
-Deletes all State objects with a name containing the letter a
+Deletes all State objects with a name containing
+the letter 'a' from the database.
 """
-import sys
-from model_state import Base, State
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-if __name__ == '__main__':
-    # Create the engine with database connection
-    engine = create_engine('mysql+mysqldb://{}:{}@localhost:3306/{}'.
-                           format(sys.argv[1], sys.argv[2], sys.argv[3]),
-                           pool_pre_ping=True)
-    Session = sessionmaker(bind=engine)
+from sqlalchemy import create_engine
+from model_state import Base, State
+from sqlalchemy.orm import sessionmaker
+import sys
+
+if __name__ == "__main__":
+    username = sys.argv[1]
+    password = sys.argv[2]
+    dbName = sys.argv[3]
+
+    engine = create_engine(
+        "mysql+mysqldb://{}:{}@localhost:3306/{}".format(
+            username,
+            password,
+            dbName
+        ),
+        pool_pre_ping=True,
+    )
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(engine)
+
     session = Session()
 
-    try:
-        # Query and delete all states with 'a' in their name
-        states_to_delete = session.query(State).filter(State.name.like('%a%')).all()
-        if states_to_delete:
-            for state in states_to_delete:
-                session.delete(state)
+    session.query(State).filter(State.name.like("%a%")).\
+        delete(synchronize_session='fetch')
+    session.commit()
 
-            session.commit()  # Commit the transaction
-        else:
-            print("No states found with 'a' in their name.")
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        session.close()  # Always close the session
-
+    session.close()
+    session.close()
